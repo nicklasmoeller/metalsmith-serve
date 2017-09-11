@@ -264,7 +264,14 @@ describe('metalsmith-serve custom http errors and redirects', function() {
       },
       "redirects": {
         "/redirect_file.txt": "/index.html",
-        "/redirect_file.txt?alt=true": "/index.html"
+        "/redirect_file.txt?alt=true": "/index.html",
+        "/custom_redirect": {
+          "path": "/index.html",
+          "statusCode": 302
+        },
+        "/fail_redirect": {
+          "statusCode": 418
+        }
       }
     });
 
@@ -374,6 +381,59 @@ describe('metalsmith-serve custom http errors and redirects', function() {
         res.on('end', function() {
           assert.equal(res.statusCode, 301);
           assert.equal(res.headers.location, "/index.html");
+          done();
+        });
+
+        res.on('error', function(e) {
+          throw(e);
+        });
+
+
+      }
+    ).end();
+
+  });
+
+  it('should return custom status code for configured redirections with custom status code', function(done){
+    var req = http.request(
+      { host: "localhost", "port": port, path: "/custom_redirect" },
+      function(res) {
+        var body = '';
+
+        res.on('data', function(buf) {
+          body += buf;
+        });
+
+        res.on('end', function() {
+          assert.equal(res.statusCode, 302);
+          assert.equal(res.headers.location, "/index.html");
+          done();
+        });
+
+        res.on('error', function(e) {
+          throw(e);
+        });
+
+
+      }
+    ).end();
+
+  });
+
+  it('should return 404 if malformed redirection', function(done){
+    var req = http.request(
+      { host: "localhost", "port": port, path: "/fail_redirect" },
+      function(res) {
+        var body = '';
+
+        res.on('data', function(buf) {
+          body += buf;
+        });
+
+        res.on('end', function() {
+          assert.equal(res.statusCode, 404);
+          var contents = fs.readFileSync(path.join(metalsmith.destination(), "404.html"), "utf8");
+          assert.equal(body, contents);
           done();
         });
 
