@@ -272,7 +272,8 @@ describe('metalsmith-serve custom http errors and redirects', function() {
         "/fail_redirect": {
           "statusCode": 418
         },
-        "/test/**/*": "/index.html"
+        "/test/**/*": "/index.html",
+        "/pattern/:a/:b/:c": "/match/:a/:b/:c"
       }
     });
 
@@ -434,6 +435,32 @@ describe('metalsmith-serve custom http errors and redirects', function() {
         res.on('end', function() {
           assert.equal(res.statusCode, 301);
           assert.equal(res.headers.location, "/index.html");
+          done();
+        });
+
+        res.on('error', function(e) {
+          throw(e);
+        });
+
+
+      }
+    ).end();
+
+  });
+
+  it('should support pattern replacing for configured redirections', function(done){
+    var req = http.request(
+      { host: "localhost", "port": port, path: "/pattern/1/2/3" },
+      function(res) {
+        var body = '';
+
+        res.on('data', function(buf) {
+          body += buf;
+        });
+
+        res.on('end', function() {
+          assert.equal(res.statusCode, 301);
+          assert.equal(res.headers.location, "/match/1/2/3");
           done();
         });
 
