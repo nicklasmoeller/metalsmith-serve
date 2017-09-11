@@ -271,7 +271,8 @@ describe('metalsmith-serve custom http errors and redirects', function() {
         },
         "/fail_redirect": {
           "statusCode": 418
-        }
+        },
+        "/test/**/*": "/index.html"
       }
     });
 
@@ -406,6 +407,32 @@ describe('metalsmith-serve custom http errors and redirects', function() {
 
         res.on('end', function() {
           assert.equal(res.statusCode, 302);
+          assert.equal(res.headers.location, "/index.html");
+          done();
+        });
+
+        res.on('error', function(e) {
+          throw(e);
+        });
+
+
+      }
+    ).end();
+
+  });
+
+  it('should support globbing slugs for configured redirections', function(done){
+    var req = http.request(
+      { host: "localhost", "port": port, path: "/test/a/b/c" },
+      function(res) {
+        var body = '';
+
+        res.on('data', function(buf) {
+          body += buf;
+        });
+
+        res.on('end', function() {
+          assert.equal(res.statusCode, 301);
           assert.equal(res.headers.location, "/index.html");
           done();
         });
